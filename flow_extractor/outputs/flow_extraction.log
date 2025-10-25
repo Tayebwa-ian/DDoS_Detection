@@ -1,0 +1,2 @@
+2025-10-25 02:41:51,063 [INFO] Starting flow extraction for: network_capture.pcap
+2025-10-25 02:41:56,040 [INFO] Flow features saved to outputs/network_capture_flows.csv
