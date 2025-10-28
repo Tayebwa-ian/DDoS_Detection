@@ -2,4 +2,4 @@ venv/*
 *.pcap
 cicflowmeter/*
 Dataset
-__*
+__py*
