@@ -3,3 +3,5 @@ venv/*
 cicflowmeter/*
 Dataset
 __py*
+clean_data/*
+*.csv
