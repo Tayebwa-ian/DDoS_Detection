@@ -5,19 +5,17 @@ services:
     image: httpd:latest # Official Apache HTTP Server image
     container_name: apache-server
     ports:
-      
-"8080:80" # Map host port 8080 to container port 80 (optional, but good for testing)
-  networks:
-app_network # Assign to the custom network
+      - "8080:80" # Map host port 8080 to container port 80 (optional, but good for testing)
+    networks:
+      - app_network # Assign to the custom network
 
   nginx:
     image: nginx:alpine # Official Nginx image
     container_name: nginx-server
     ports:
-      
-"8081:80" # Map host port 8081 to container port 80 (optional)
-  networks:
-app_network # Assign to the custom network
+      - "8081:80" # Map host port 8081 to container port 80 (optional)
+    networks:
+      - app_network # Assign to the custom network
 
 networks:
   app_network: # Define the custom bridge network
