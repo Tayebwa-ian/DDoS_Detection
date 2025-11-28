@@ -5,3 +5,4 @@ Dataset
 __py*
 clean_data/*
 *.csv
+node_modules/*
