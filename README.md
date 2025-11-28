@@ -52,7 +52,7 @@ node -v
 
 ### 2. Install xdp-filter Utility
 
-The userspace tool xdp-filter is crucial for managing the eBPF program and the IP block list. Please follow the official installation guide: Official XDP-Tools Guide
+The userspace tool xdp-filter is crucial for managing the eBPF program and the IP block list. Please follow the official installation guide: [Official XDP-Tools Guide](https://github.com/xdp-project/xdp-tools)
 
 ## Setup and Run
 
