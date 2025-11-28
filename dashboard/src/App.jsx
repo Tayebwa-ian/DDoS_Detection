@@ -1,36 +1,38 @@
-// src/App.jsx
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { parseCSV, aggregateData } from './helpers/dataProcessing';
-import { CSV_FILE_URL, POLLING_INTERVAL } from './config/constants';
+import { CSV_FILE_URL, POLLING_INTERVAL, ROWS_PER_PAGE } from './config/constants';
 import FilterControls from './components/FilterControls';
 import SummaryCharts from './components/SummaryCharts';
 import DataTable from './components/DataTable';
 
 export default function App() {
-    // State to hold ALL incoming traffic records
+    // State to hold ALL incoming traffic records from the server
     const [trafficData, setTrafficData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     
-    // State to hold the current filter values
+    // State for pagination: current page number
+    const [currentPage, setCurrentPage] = useState(1); 
+    
+    // State to hold the current filter values from user input
     const [filters, setFilters] = useState({
         src_ip: '',
         dst_ip: '',
         proto: '',
-        final_label: '',
+        final_label: '', // This is for the categorical dropdown filter
     });
 
     /**
-     * Retrieves the CSV file content from the specified URL.
+     * Retrieves the CSV file content from the specified HTTP URL (http://localhost:8000).
+     * This function is run on mount and then periodically by setInterval.
      * @returns {void}
      */
     const fetchTrafficData = useCallback(async () => {
         try {
             const response = await fetch(CSV_FILE_URL);
             
-            // Check for successful HTTP response
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                // If the server returns an error status (e.g., 404), log it.
+                throw new Error(`HTTP error! status: ${response.status} from ${CSV_FILE_URL}`);
             }
 
             // Read the response body as plain text (the CSV content)
@@ -39,18 +41,16 @@ export default function App() {
             // Parse the CSV content into structured data
             const parsedData = parseCSV(csvText);
             
-            // NOTE: For real-time updates, we overwrite the previous data.
-            // If you need to append new data only, more complex logic is required
-            // (e.g., checking timestamps and merging). For now, we load the whole updated file.
+            // Update the main state with the new data
             setTrafficData(parsedData);
         } catch (error) {
-            console.error("Failed to fetch or process traffic data:", error);
+            console.error("Failed to fetch or process traffic data. Is the Node.js data server running on port 8000?", error);
         } finally {
             setIsLoading(false);
         }
     }, []);
 
-    // --- REAL-TIME DATA POLLING ---
+    // --- REAL-TIME DATA POLLING EFFECT ---
     useEffect(() => {
         // 1. Initial data load
         fetchTrafficData();
@@ -65,35 +65,73 @@ export default function App() {
     }, [fetchTrafficData]);
 
     // --- FILTERING LOGIC (Memoized for performance) ---
+    // This hook filters ALL records based on the current filter inputs.
     const filteredData = useMemo(() => {
-        // Check if data is still loading
         if (isLoading) return [];
 
+        // Pre-process filter values once for efficiency and case-insensitivity
+        const filterSrcIp = filters.src_ip.toLowerCase();
+        const filterDstIp = filters.dst_ip.toLowerCase();
+        const filterProto = filters.proto.toLowerCase();
+
         return trafficData.filter(record => {
-            // Case-insensitive filtering using includes()
-            const matchesSrc = record.src_ip.toString().includes(filters.src_ip);
-            const matchesDst = record.dst_ip.toString().includes(filters.dst_ip);
-            const matchesProto = record.proto.toString().includes(filters.proto);
+            // 1. Safe access and lowercasing of record fields (prevents 'toString' error)
+            const recordSrcIp = (record.src_ip?.toString() || '').toLowerCase();
+            const recordDstIp = (record.dst_ip?.toString() || '').toLowerCase();
+            const recordProto = (record.proto?.toString() || '').toLowerCase();
+            const recordLabel = record.final_label || '';
+
+            // 2. Partial match check for IPs and Protocol (case-insensitive)
+            const matchesSrc = recordSrcIp.includes(filterSrcIp);
+            const matchesDst = recordDstIp.includes(filterDstIp);
+            const matchesProto = recordProto.includes(filterProto);
             
-            // Exact match filtering for categorical label
-            const matchesLabel = filters.final_label === '' || record.final_label === filters.final_label;
+            // 3. Exact match check for the final_label dropdown
+            const matchesLabel = filters.final_label === '' || recordLabel === filters.final_label;
 
             return matchesSrc && matchesDst && matchesProto && matchesLabel;
         });
-    }, [trafficData, filters, isLoading]);
+    }, [trafficData, filters, isLoading]); // Re-run when data or filters change
+
+    // --- PAGINATION LOGIC ---
+    const totalPages = Math.ceil(filteredData.length / ROWS_PER_PAGE);
+
+    // Get the data slice for the current page
+    const paginatedData = useMemo(() => {
+        const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+        const endIndex = startIndex + ROWS_PER_PAGE;
+        return filteredData.slice(startIndex, endIndex);
+    }, [filteredData, currentPage]);
+    
+    // Reset page to 1 whenever the filtered results change (e.g., filter applied or new data received)
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filteredData]);
+
 
     // --- AGGREGATION & UNIQUE LABELS (Memoized) ---
     const { labelData, protoData } = useMemo(() => aggregateData(filteredData), [filteredData]);
 
     const uniqueLabels = useMemo(() => {
+        // Collect all unique labels for the filter dropdown
         const labels = new Set(trafficData.map(d => d.final_label).filter(Boolean));
         return Array.from(labels).sort();
     }, [trafficData]);
 
     // --- FILTER HANDLER ---
     const handleFilterChange = useCallback((key, value) => {
+        // Update the specific filter key with the new value
         setFilters(prev => ({ ...prev, [key]: value }));
     }, []);
+
+    // --- PAGINATION HANDLERS ---
+    const handlePageChange = useCallback((page) => {
+        // Only allow navigation to valid page numbers
+        if (page > 0 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    }, [totalPages]);
+
 
     return (
         <div className="p-6 bg-gray-100 min-h-screen font-sans">
@@ -112,16 +150,23 @@ export default function App() {
                         onFilterChange={handleFilterChange} 
                         uniqueLabels={uniqueLabels}
                     />
+
+                    <hr className="my-6 border-gray-300" />
+
+                    <h2 className="text-2xl font-semibold mb-4 text-gray-800">Traffic Records</h2>
+                    <DataTable 
+                        data={paginatedData} // Pass only the slice of data for the current page
+                        totalRecords={filteredData.length} // Pass the total count of filtered records
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
                     
                     <hr className="my-6 border-gray-300" />
 
                     <h2 className="text-2xl font-semibold mb-4 text-gray-800">Summary Analytics</h2>
                     <SummaryCharts labelData={labelData} protoData={protoData} />
 
-                    <hr className="my-6 border-gray-300" />
-                    
-                    <h2 className="text-2xl font-semibold mb-4 text-gray-800">Filtered Records</h2>
-                    <DataTable data={filteredData} />
                 </>
             )}
             

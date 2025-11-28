@@ -27,6 +27,7 @@ export const parseCSV = (csvText) => {
         });
         data.push(record);
     }
+    // console.log(data);
     return data;
 };
 
