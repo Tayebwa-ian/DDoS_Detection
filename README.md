@@ -84,6 +84,7 @@ npm install
 # Install dashboard dependencies
 cd ../dashboard
 npm install
+npm install tailwindcss @tailwindcss/vite
 ```
 
 ### 4. Run the IDS/IPS Tool (Data Generator)  
