@@ -2,7 +2,29 @@
 
 import React from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { COLORS } from '../config/constants';
+// Assuming COLORS is an array of colors, but we'll define the needed colors locally for clarity.
+// import { COLORS } from '../config/constants'; // No longer strictly needed for Pie Chart, but kept for Bar Chart fallback
+
+// --- Custom Color Mapping Function ---
+/**
+ * Determines the color for a Pie Chart segment based on its traffic label.
+ * @param {string} label - The traffic label (e.g., 'BENIGN', 'MALICIOUS').
+ * @returns {string} - The hex color code.
+ */
+const getLabelColor = (label) => {
+    // Standardizing the label to uppercase for robust matching
+    const upperLabel = label ? label.toUpperCase() : '';
+
+    if (upperLabel.includes('BENIGN')) {
+        return '#4ade80'; // A bright, standard green
+    }
+    if (upperLabel.includes('MALICIOUS')) {
+        return '#f87171'; // A bright, standard red
+    }
+    
+    // Fallback for any other labels (like 'UNKNOWN' or specific attack types)
+    return '#6b7280'; // A neutral gray 
+};
 
 const SummaryCharts = ({ labelData, protoData }) => (
     <div className="flex flex-col gap-6">
@@ -22,7 +44,11 @@ const SummaryCharts = ({ labelData, protoData }) => (
                         paddingAngle={2}
                     >
                         {labelData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            // >>> MODIFICATION HERE: Using getLabelColor based on entry.name <<<
+                            <Cell 
+                                key={`cell-${index}`} 
+                                fill={getLabelColor(entry.name)} 
+                            />
                         ))}
                     </Pie>
                     <Tooltip />
@@ -40,7 +66,7 @@ const SummaryCharts = ({ labelData, protoData }) => (
                     <YAxis stroke="#333" />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="count" fill="#82ca9d" name="Packet Count" />
+                    <Bar dataKey="count" fill="#82ca9d" name="Packet Count" /> 
                 </BarChart>
             </ResponsiveContainer>
         </div>
