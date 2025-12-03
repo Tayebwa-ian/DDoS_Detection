@@ -5,11 +5,11 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, Legend, Resp
 import { COLORS } from '../config/constants';
 
 const SummaryCharts = ({ labelData, protoData }) => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="flex flex-col gap-6">
         {/* Traffic Label Distribution Pie Chart */}
         <div className="bg-white p-4 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold mb-2 text-center text-gray-800">Traffic Label Distribution</h3>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                     <Pie
                         data={labelData}
@@ -18,15 +18,15 @@ const SummaryCharts = ({ labelData, protoData }) => (
                         cx="50%"
                         cy="50%"
                         outerRadius={100}
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        innerRadius={60}
+                        paddingAngle={2}
                     >
                         {labelData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                     </Pie>
                     <Tooltip />
-                    <Legend layout="vertical" align="right" verticalAlign="middle" />
+                    <Legend layout="horizontal" align="center" verticalAlign="bottom" />
                 </PieChart>
             </ResponsiveContainer>
         </div>

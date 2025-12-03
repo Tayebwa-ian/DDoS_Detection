@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import './App.css';
 import { parseCSV, aggregateData } from './helpers/dataProcessing';
 import { CSV_FILE_URL, POLLING_INTERVAL, ROWS_PER_PAGE } from './config/constants';
 import FilterControls from './components/FilterControls';
@@ -153,20 +154,25 @@ export default function App() {
 
                     <hr className="my-6 border-gray-300" />
 
-                    <h2 className="text-2xl font-semibold mb-4 text-gray-800">Traffic Records</h2>
-                    <DataTable 
-                        data={paginatedData} // Pass only the slice of data for the current page
-                        totalRecords={filteredData.length} // Pass the total count of filtered records
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={handlePageChange}
-                    />
-                    
-                    <hr className="my-6 border-gray-300" />
+                    <div className="flex flex-col lg:flex-row gap-6">
+                        {/* LEFT COLUMN: Traffic Records Table */}
+                        <div className="lg:w-[65%]">
+                            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Traffic Records</h2>
+                            <DataTable 
+                                data={paginatedData}
+                                totalRecords={filteredData.length}
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={handlePageChange}
+                            />
+                        </div>
 
-                    <h2 className="text-2xl font-semibold mb-4 text-gray-800">Summary Analytics</h2>
-                    <SummaryCharts labelData={labelData} protoData={protoData} />
-
+                        {/* RIGHT COLUMN: Summary Analytics Charts */}
+                        <div className="lg:w-[35%]">
+                            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Summary Analytics</h2>
+                            <SummaryCharts labelData={labelData} protoData={protoData} />
+                        </div>
+                    </div>
                 </>
             )}
             
