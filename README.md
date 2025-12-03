@@ -97,6 +97,9 @@ NOTE: This must be run with sudo.
 # Execute the main script with sudo, referencing the VIRTUAL_ENV path
 # Adjust 'eth0' and '--duration' as needed for your environment
 cd ../real_time_detection 
+
+# Mount the bpffs File System
+sudo mount -t bpf none /sys/fs/bpf  
 sudo $VIRTUAL_ENV/bin/python3 main.py --iface eth0 --duration 120
 ```
 

@@ -1,13 +1,14 @@
 // src/helpers/dataProcessing.js
 
 /**
- * Parses the raw CSV string into an array of objects.
+ * Parses the raw CSV string into an array of objects, then sorts them by timestamp 
+ * in descending order (most current on top).
  * Assumes the first row is the header.
  * @param {string} csvText - The raw CSV content.
- * @returns {Array<Object>} - Array of traffic records.
+ * @param {string} timestampKey - The key/field name containing the timestamp (e.g., 'timestamp').
+ * @returns {Array<Object>} - Array of traffic records, sorted by most current first.
  */
-export const parseCSV = (csvText) => {
-    // Standard CSV parsing logic
+export const parseCSV = (csvText, timestampKey = 'timestamp') => { // Added timestampKey argument
     const lines = csvText.trim().split('\n');
     if (lines.length === 0) return [];
 
@@ -27,7 +28,29 @@ export const parseCSV = (csvText) => {
         });
         data.push(record);
     }
-    // console.log(data);
+    
+    /**
+     * Sorts the data by the specified timestamp field in descending order (most current on top).
+     */
+    data.sort((a, b) => {
+        // Handle cases where the timestamp key might not exist or the value is invalid
+        if (!a[timestampKey] || !b[timestampKey]) {
+            return 0; // Maintain current order if timestamps are missing
+        }
+
+        const dateA = new Date(a[timestampKey]);
+        const dateB = new Date(b[timestampKey]);
+
+        // Check for invalid dates (Date(null) or Date(undefined) is often valid but incorrect)
+        if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+            return 0; // Maintain current order if dates are invalid
+        }
+        
+        // Descending order (newest first): B - A
+        // If B is a later date, the result is positive, placing B before A.
+        return dateB - dateA;
+    });
+
     return data;
 };
 
